@@ -200,23 +200,28 @@ sudo nano /etc/systemd/system/project-1.service
 Content:
 
 ```ini
+
 [Unit]
-Description=project-1 gunicorn service
+Description=gunicorn daemon
 Requires=project-1.socket
 After=network.target
 
 [Service]
 User=root
 Group=root
-
 WorkingDirectory=/home/django/project-1
-
-ExecStart=/home/django/project-1_venv/bin/gunicorn \
-    --workers 3 \
-    --access-logfile /home/django/project-1/logs/access.log \
-    --error-logfile /home/django/project-1/logs/error.log \
-    --bind unix:/run/project-1.sock \
-    your_project.wsgi:application
+Environment="DJANGO_SETTINGS_MODULE=project-1.setting"
+ExecStart=/home/django/project-1/venv/bin/gunicorn \
+          --access-logfile /home/django/project-1/logs/gunicorn-access.log \
+          --error-logfile /home/django/project-1/logs/gunicorn-error.log \
+          --log-level debug \
+          --capture-output \
+          --workers 3 \
+          --timeout 300 \
+          --bind unix:/run/hrm-api.tclinformatix.sock \
+          tcl_hrm_api.wsgi:application
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
@@ -373,23 +378,27 @@ Replace `wsgi` with `asgi`:
 
 ```ini
 [Unit]
-Description=project-1 gunicorn service
+Description=gunicorn daemon
 Requires=project-1.socket
 After=network.target
 
 [Service]
 User=root
 Group=root
-
 WorkingDirectory=/home/django/project-1
-
-ExecStart=/home/django/project-1_venv/bin/gunicorn \
-    --workers 3 \
-    -k uvicorn.workers.UvicornWorker \
-    --access-logfile /home/django/project-1/logs/access.log \
-    --error-logfile /home/django/project-1/logs/error.log \
-    --bind unix:/run/project-1.sock \
-    your_project.asgi:application
+Environment="DJANGO_SETTINGS_MODULE=project-1.setting"
+ExecStart=/home/django/project-1/venv/bin/gunicorn \
+          --access-logfile /home/django/project-1/logs/gunicorn-access.log \
+          --error-logfile /home/django/project-1/logs/gunicorn-error.log \
+          --log-level debug \
+          --capture-output \
+          --workers 3 \
+          -k uvicorn.workers.UvicornWorker \
+          --timeout 300 \
+          --bind unix:/run/hrm-api.tclinformatix.sock \
+          tcl_hrm_api.asgi:application
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
