@@ -435,52 +435,6 @@ sudo systemctl restart nginx
 
 ---
 
-# CI/CD Deployment Script
-
-Example deployment script:
-
-```yaml
-script: |
-  set -e
-
-  MAX_RETRIES=3
-  RETRY_DELAY=600
-  ATTEMPT=0
-
-  deploy() {
-    cd /root/project-folder
-
-    git pull origin production
-
-    source venv/bin/activate
-
-    pip install -r requirements.txt --quiet
-
-    python3 manage.py makemigrations
-    python3 manage.py migrate
-
-    sudo systemctl restart project-1.socket project-1.service nginx
-
-    supervisorctl restart celery-worker celery-beat
-
-    echo "Deployment complete!"
-  }
-
-  until deploy; do
-    ATTEMPT=$((ATTEMPT + 1))
-
-    if [ "$ATTEMPT" -ge "$MAX_RETRIES" ]; then
-      echo "Deployment failed."
-      exit 1
-    fi
-
-    echo "Retrying in 10 minutes..."
-    sleep $RETRY_DELAY
-  done
-```
-
----
-
 # Logs & Debugging
 
 Nginx logs:
@@ -493,40 +447,4 @@ Systemd logs:
 
 ```bash
 journalctl -u project-1.service -f
-```
-
-Check ports:
-
-```bash
-sudo lsof -i :80
-sudo lsof -i :443
-```
-
----
-
-# Important Note
-
-Your deployment script DOES NOT need to change between:
-
-## WSGI
-
-```python
-project.wsgi:application
-```
-
-## ASGI
-
-```python
-project.asgi:application
-```
-
-Because deployment only restarts the service:
-
-```bash
-systemctl restart project-1.service
-```
-
-Systemd automatically uses whichever config is currently saved.
-
-```
 ```
